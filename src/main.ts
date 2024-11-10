@@ -7,8 +7,10 @@ import { Terminal } from "./system/tty";
 async function loop(time: DOMHighResTimeStamp) {
   try {
     SYSTEM.programs.forEach(async program => {
+      await program.Update(time)
       await program.Draw(time)
     })
+
     requestAnimationFrame(loop)
   } catch (error) {
     console.error('error in loop ', error)
