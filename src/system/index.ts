@@ -1,5 +1,10 @@
+import utils from "../utils";
+import { Program } from "./program";
+
 export interface System {
     idb: IDBDatabase;
+    appDiv: HTMLDivElement;
+    programs: Program[]
 }
 
 export interface IDBTable {
@@ -33,8 +38,14 @@ export async function initSystem(): Promise<System> {
         {name: 'fileSystem', options: {keyPath: 'name'}}
     ])
 
+    const appDiv = utils.$<HTMLDivElement>("#app")
+
+    if (!appDiv) throw new Error(`#app div is not present at system init`)
+
     SYSTEM = {
-        idb
+        idb,
+        appDiv,
+        programs: []
     }
 
     return SYSTEM
