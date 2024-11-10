@@ -51,3 +51,37 @@
   right: -5px;
   cursor: nwse-resize;
 }
+
+.program-top-bar {
+  position: relative;
+  top: 1px;
+  width: inherit;
+  height: 25px;
+  background: white;
+  display: flex;
+}
+
+.program-title {
+  padding-left: 5px;
+  color: black;
+  font-weight: 600;
+  width: 100%;
+  text-align: left;
+}
+
+.program-container {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid white;
+  border-top: none;
+  position: absolute;
+}
+
+.program-top-bar-button {
+  background: white;
+  align-self: center;
+  margin-right: 5px;
+  color: red;
+  font-weight: 600;
+  cursor: pointer;
+}
