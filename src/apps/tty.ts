@@ -1,4 +1,3 @@
-import { SYSTEM } from "../system";
 import { Program } from "../system/program";
 
 export interface TerminalCommandResult {
