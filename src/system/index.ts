@@ -81,7 +81,8 @@ export async function startProgram(newProgram: Program) {
   topBar.classList.add("program-top-bar")
   topBar.appendChild(closeButton)
 
-  // Top bar actions
+
+  // Close button
   closeButton.addEventListener("click", async () => {
     await program.Close()
 
@@ -92,6 +93,7 @@ export async function startProgram(newProgram: Program) {
     SYSTEM.programs.splice(systemProgram, 1)
   })
 
+  // Drag window
   let dragging = false
   topBar.addEventListener("mousedown", () => {
     dragging = true
@@ -120,6 +122,7 @@ export async function startProgram(newProgram: Program) {
     container.style.top = `${newTop}px`;
   })
 
+  // Resize window
   let isResizing = false;
   let initialMouseX = 0;
   let initialMouseY = 0;
@@ -130,7 +133,6 @@ export async function startProgram(newProgram: Program) {
     e.preventDefault();
     isResizing = true;
 
-    // Record initial positions and sizes
     initialMouseX = e.clientX;
     initialMouseY = e.clientY;
     const rect = container.getBoundingClientRect();
@@ -147,11 +149,9 @@ export async function startProgram(newProgram: Program) {
     const dx = e.clientX - initialMouseX;
     const dy = e.clientY - initialMouseY;
 
-    // Calculate new width and height with minimum size constraints
     const newWidth = Math.max(initialWidth + dx, 100);
     const newHeight = Math.max(initialHeight + dy, 100);
 
-    // Apply new sizes
     container.style.width = `${newWidth}px`;
     container.style.height = `${newHeight}px`;
   }
