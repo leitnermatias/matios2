@@ -50,3 +50,27 @@ export async function initSystem(): Promise<System> {
 
     return SYSTEM
 }
+
+export async function startProgram(newProgram: Program) {
+    const program = await newProgram.Init()
+    program.id = crypto.randomUUID()
+
+    const container = document.createElement("div")
+
+    container.style.display = "flex"
+    container.style.flexDirection = "column"
+
+    const topBar = document.createElement("nav")
+    topBar.style.position = "relative"
+    topBar.style.top = "1px"
+    topBar.style.width = "100%"
+    topBar.style.height = "25px"
+    topBar.style.background = "gray"
+
+    container.appendChild(topBar)
+    container.appendChild(program.viewport)
+    
+    SYSTEM.appDiv.appendChild(container)
+
+    SYSTEM.programs.push(program)
+}

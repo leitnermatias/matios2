@@ -1,7 +1,7 @@
 import "./style.css"
 
 // import { SystemFile, FileSystem } from "./system/file";
-import { initSystem, SYSTEM } from "./system";
+import { initSystem, startProgram, SYSTEM } from "./system";
 import { Terminal } from "./system/tty";
 
 async function loop(time: DOMHighResTimeStamp) {
@@ -24,9 +24,7 @@ window.onload = async () => {
   }
   console.log("System init with success")
 
-  const tty = await Terminal.Init()
-
-  SYSTEM.programs.push(tty)
+  startProgram(Terminal)
 
   // try {
   //   const data = [

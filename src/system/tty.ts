@@ -1,4 +1,3 @@
-import { SYSTEM } from ".";
 import { Program } from "./program";
 
 export const Terminal: Program = {
@@ -10,7 +9,6 @@ export const Terminal: Program = {
         lastTimeStamp: 0
     },
     Init: async (): Promise<Program> => {
-        Terminal.id = crypto.randomUUID()
         Terminal.viewport.style.width = "400px"
         Terminal.viewport.style.height = "400px"
         Terminal.viewport.style.background = "black"
@@ -18,7 +16,6 @@ export const Terminal: Program = {
         Terminal.viewport.style.textAlign = 'left'
         Terminal.viewport.style.padding = '10px'
         Terminal.viewport.style.fontFamily = 'monospace'
-        SYSTEM.appDiv.appendChild(Terminal.viewport)
         return Terminal
     },
     Draw: async (time: DOMHighResTimeStamp): Promise<void> => {
