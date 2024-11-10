@@ -2,7 +2,7 @@ import "./style.css"
 
 // import { SystemFile, FileSystem } from "./system/file";
 import { initSystem, startProgram, SYSTEM } from "./system";
-import { Terminal } from "./system/tty";
+import { Terminal } from "./apps/tty";
 
 async function loop(time: DOMHighResTimeStamp) {
   try {
@@ -35,10 +35,10 @@ window.onload = async () => {
   //     [2, "Jane Smith", "janesmith@example.com"],
   //     [3, "Chris Johnson", "chrisj@example.com"]
   //   ];
-    
+
   //   const csvContent = data.map(e => e.join(",")).join("\n");
   //   const blob = new Blob([csvContent], { type: "text/csv" });
-  
+
   //   const f1 = new SystemFile({name: 'Test in init', path: '/tmp', contents: new File([blob], 'test in init.csv', {type: 'text/csv'})})
   //   await f1.save()
 

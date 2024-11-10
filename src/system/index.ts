@@ -4,7 +4,8 @@ import { Program } from "./program";
 export interface System {
   idb: IDBDatabase;
   appDiv: HTMLDivElement;
-  programs: Program[]
+  programs: Program<any>[];
+  DEBUG: HTMLElement
 }
 
 export interface IDBTable {
@@ -40,18 +41,23 @@ export async function initSystem(): Promise<System> {
 
   const appDiv = utils.$<HTMLDivElement>("#app")
 
+  const debug = document.createElement("div")
+
+  appDiv?.appendChild(debug)
+
   if (!appDiv) throw new Error(`#app div is not present at system init`)
 
   SYSTEM = {
     idb,
     appDiv,
-    programs: []
+    programs: [],
+    DEBUG: debug
   }
 
   return SYSTEM
 }
 
-export async function startProgram(newProgram: Program) {
+export async function startProgram(newProgram: Program<any>) {
   const program = await newProgram.Init()
   program.id = crypto.randomUUID()
 
