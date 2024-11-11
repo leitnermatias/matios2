@@ -76,6 +76,30 @@ export const Terminal: Program<TerminalState> = {
                 },
                 help: `Removes all previous output from the terminal and cleans up the history.`
             },
+            cd: {
+                f: (input) => {
+                    return {
+                        input,
+                        output: 'Not implemented yet'
+                    }
+                },
+                help: `Moves the current position in the filesystem to a new one
+                       Usage: cd <path>
+                `
+            },
+            ls: {
+                f: (input) => {
+                    return {
+                        input,
+                        output: `Not  implemented yet`
+                    }
+                },
+                help: `Shows the contents of the given path in the filesystem
+                       Usage:
+                       - For showing the contents of the current position: ls
+                       - For showing the contents of a particular path: ls <path>
+                `
+            }
         }
     },
     Init: async (): Promise<Program<TerminalState>> => {
