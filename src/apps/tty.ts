@@ -13,14 +13,14 @@ export interface TerminalState {
     input: HTMLInputElement;
     keyMap: { [key: string]: boolean };
     lastTimeStamp: number;
-    defaultCommands: { [key: string]: TerminalCommand }
+    defaultCommands: { [key: string]: { f: TerminalCommand, help: string } }
 }
 
 export const Terminal: Program<TerminalState> = {
     title: "Terminal",
     viewport: document.createElement("div"),
-    width: "400px",
-    height: "400px",
+    width: `${window.innerWidth / 2}px`,
+    height: `${window.innerHeight / 2}px`,
     state: {
         historyView: document.createElement('div'),
         history: [],
@@ -29,15 +29,53 @@ export const Terminal: Program<TerminalState> = {
         keyMap: {},
         lastTimeStamp: 0,
         defaultCommands: {
-            notFound: (input) => ({ input, output: `The command ${input.split(' ')[0]} does not exist.` }),
-            clear: () => {
-                Terminal.state.history = []
-                Terminal.state.historyView.innerHTML = ''
-                return {
-                    input: '',
-                    output: ''
-                }
-            }
+            help: {
+                f: (input) => {
+                    let output = `
+                        To receive help for a particular command, type help <command name>
+    
+                        Available default commands:
+                        - clear
+                        - ls
+                        - cd
+                        - help
+                    `
+
+                    const splitted = input.split(" ")
+
+                    if (splitted.length > 1) {
+                        const cmdName = splitted[1]
+                        const cmd = Terminal.state.defaultCommands[cmdName]
+
+                        if (cmd && cmd.help !== '') {
+                            output = cmd.help
+                        } else {
+                            output = `${cmdName} is not a valid command or it doesn't provide any help information.`
+                        }
+                    }
+
+                    return {
+                        input,
+                        output
+                    }
+                },
+                help: ``
+            },
+            notFound: {
+                f: (input) => ({ input, output: `The command ${input.split(' ')[0]} does not exist.` }),
+                help: ``
+            },
+            clear: {
+                f: () => {
+                    Terminal.state.history = []
+                    Terminal.state.historyView.innerHTML = ''
+                    return {
+                        input: '',
+                        output: ''
+                    }
+                },
+                help: `Removes all previous output from the terminal and cleans up the history.`
+            },
         }
     },
     Init: async (): Promise<Program<TerminalState>> => {
@@ -61,6 +99,7 @@ export const Terminal: Program<TerminalState> = {
         cmdWrapper.style.alignItems = 'center'
         const prefix = document.createElement('span')
         prefix.style.marginRight = '2px'
+        prefix.style.color = 'green'
         prefix.innerText = '>'
         cmdWrapper.appendChild(prefix)
 
@@ -115,7 +154,7 @@ export const Terminal: Program<TerminalState> = {
             const cmdName = Terminal.state.input.value.split(' ')[0]
             const cmd = Terminal.state.defaultCommands[cmdName] || Terminal.state.defaultCommands.notFound
 
-            const result = cmd(Terminal.state.input.value)
+            const result = cmd.f(Terminal.state.input.value)
 
             Terminal.state.history.push({
                 input: result.input,
