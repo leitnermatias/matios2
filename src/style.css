@@ -11,13 +11,37 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  --default-bg-primary: #404040
+}
+
+body {
+  overflow: hidden;
+  height: 99vh;
+  padding: 0px;
+  margin: 0px;
 }
 
 #app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+  width: 100%;
+  height: 100%;
+  padding: 0px;
+  margin: 0px;
   text-align: center;
+  overflow: hidden;
+}
+
+#top-nav {
+  background-color: var(--default-bg-primary);
+  width: 100%;
+  height: 30px;
+  display: flex;
+  padding: 0px 10px
+}
+
+#system-info {
+  display: flex;
+  gap: 20px;
 }
 
 .resize-handle {

@@ -166,7 +166,7 @@ export class Terminal extends Program<TerminalState> {
         })
 
         const viewportStyle = this.viewport.style;
-        viewportStyle.background = "black";
+        viewportStyle.background = "#00000031";
         viewportStyle.color = "white";
         viewportStyle.textAlign = 'left';
         viewportStyle.padding = '10px';

@@ -5,6 +5,7 @@ import { FileSystem, SystemFile, SystemFileType } from "./file";
 export interface System {
   idb: IDBDatabase;
   appDiv: HTMLDivElement;
+  topNav: HTMLElement;
   programs: Program<any>[];
   DEBUG: HTMLElement;
   fsRootId: string;
@@ -47,24 +48,43 @@ export async function initSystem(): Promise<System> {
   ])
 
   const appDiv = utils.$<HTMLDivElement>("#app")
+  const topNav = utils.$<HTMLElement>("#top-nav")
 
   const debug = document.createElement("div")
+  debug.id = "DEBUG"
 
   appDiv?.appendChild(debug)
 
   if (!appDiv) throw new Error(`#app div is not present at system init`)
+  if (!topNav) throw new Error(`#top-nav is not present at system init`)
 
   SYSTEM = {
     idb,
     appDiv,
+    topNav,
     programs: [],
     DEBUG: debug,
     fsRootId: '',
   }
 
-  const systemInfo = document.createElement("p")
-  systemInfo.innerText = `IDB Version: ${idb.version}`
-  SYSTEM.appDiv.appendChild(systemInfo)
+  const systemInfo = document.createElement("div")
+  systemInfo.id = "system-info"
+  SYSTEM.topNav.appendChild(systemInfo)
+
+  const storageEstimate = await navigator.storage.estimate()
+
+  let usedPercentage = 'Unknown'
+  if (storageEstimate.quota && storageEstimate.usage) {
+    usedPercentage = ((storageEstimate.usage / storageEstimate.quota) * 100).toFixed(1);
+  }
+
+
+  const idbVersion = document.createElement("span")
+  const storageUsed = document.createElement("span")
+  storageUsed.innerHTML = `{ <b>Storage used</b> ${usedPercentage}% }`
+  idbVersion.innerHTML = `{ <b>IDB Version</b> ${idb.version} }`
+  systemInfo.appendChild(idbVersion)
+  systemInfo.appendChild(storageUsed)
 
   const fsRoot = await FileSystem.GetRoot()
 
