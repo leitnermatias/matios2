@@ -31,15 +31,43 @@ body {
   overflow: hidden;
 }
 
-#errors {
+#notifications {
   position: absolute;
   z-index: 9999;
   bottom: 1px;
-  right: 1px;
-  width: 25vw;
+  right: 10px;
+  width: fit-content;
   height: 25vh;
   display: flex;
   flex-direction: column-reverse;
+}
+
+.notification {
+  border: 1px solid;
+  padding: 10px;
+  border-radius: 5px;
+  background-color: var(--default-bg-primary);
+  cursor: pointer;
+}
+
+.notification.enter {
+  animation: fade-in-notify 0.5s ease-out;
+}
+
+.notification.exit {
+  animation: fade-out-notify 0.5s ease-out;
+}
+
+.notification.success {
+  border-color: greenyellow;
+}
+
+.notification.error {
+  border-color: red;
+}
+
+.notification.warning {
+  border-color: orange;
 }
 
 #top-nav {
@@ -119,4 +147,28 @@ body {
   color: red;
   font-weight: 600;
   cursor: pointer;
+}
+
+@keyframes fade-in-notify {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-out-notify {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateX(20px);
+  }
 }

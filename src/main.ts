@@ -1,8 +1,8 @@
 import "./style.css"
 
 // import { SystemFile, FileSystem } from "./system/file";
-import { initSystem, startProgram, SYSTEM } from "./system";
-import { Terminal } from "./apps/tty";
+import { initSystem, SYSTEM } from "./system";
+import { systemNotify } from "./system/notifications";
 
 async function loop(time: DOMHighResTimeStamp) {
   try {
@@ -10,10 +10,9 @@ async function loop(time: DOMHighResTimeStamp) {
       await program.Update(time)
       await program.Draw(time)
     })
-
     requestAnimationFrame(loop)
   } catch (error) {
-    console.error('error in loop ', error)
+    systemNotify('Error in execution', 'error', 60)
   }
 }
 
@@ -21,15 +20,10 @@ window.onload = async () => {
   try {
     await initSystem()
   } catch (error) {
-    console.error("Error on system init ", error)
+    systemNotify("Error on system init", "error", 10)
     return
   }
-  console.log("System init with success")
+  systemNotify("System init with success", "success", 5)
 
-  try {
-    await startProgram(new Terminal())
-  } catch (error) {
-    console.error(error)
-  }
   requestAnimationFrame(loop)
 }

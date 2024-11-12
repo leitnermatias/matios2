@@ -22,5 +22,5 @@ function debounce(func: Function, delay: number) {
 export default {
     $,
     $$,
-    debounce
+    debounce,
 }
