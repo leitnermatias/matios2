@@ -18,7 +18,7 @@ export interface IDBTable {
 
 export async function initIDB(tables: IDBTable[]): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open('system', 1);
+    const request = indexedDB.open('system', 2);
 
     request.onupgradeneeded = (event) => {
       const db = (event.target as IDBOpenDBRequest).result;
