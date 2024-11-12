@@ -26,7 +26,12 @@ window.onload = async () => {
   }
   console.log("System init with success")
 
-  startProgram(Terminal)
+  try {
+    await startProgram(new Terminal())
+    await startProgram(new Terminal())
+  } catch (error) {
+    console.error(error)
+  }
 
   // try {
   //   const data = [

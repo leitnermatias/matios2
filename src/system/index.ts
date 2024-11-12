@@ -1,16 +1,19 @@
 import utils from "../utils";
 import { Program } from "./program";
+import { FileSystem, SystemFile, SystemFileType } from "./file";
 
 export interface System {
   idb: IDBDatabase;
   appDiv: HTMLDivElement;
   programs: Program<any>[];
-  DEBUG: HTMLElement
+  DEBUG: HTMLElement;
+  fsRootId: string;
 }
 
 export interface IDBTable {
   name: string;
-  options?: IDBObjectStoreParameters
+  options?: IDBObjectStoreParameters;
+  indexes: { name: string, keyPath: string | string[], options?: IDBIndexParameters }[]
 }
 
 export async function initIDB(tables: IDBTable[]): Promise<IDBDatabase> {
@@ -22,7 +25,11 @@ export async function initIDB(tables: IDBTable[]): Promise<IDBDatabase> {
 
       tables.forEach(table => {
         if (!db.objectStoreNames.contains(table.name)) {
-          db.createObjectStore(table.name, table.options)
+          const store = db.createObjectStore(table.name, table.options)
+
+          table.indexes.forEach(index => {
+            store.createIndex(index.name, index.keyPath, index.options)
+          })
         }
       })
     };
@@ -36,7 +43,7 @@ export let SYSTEM: System;
 
 export async function initSystem(): Promise<System> {
   const idb = await initIDB([
-    { name: 'fileSystem', options: { keyPath: 'name' } }
+    { name: 'fileSystem', options: { keyPath: 'id' }, indexes: [{ name: 'pathIndex', keyPath: 'path', options: { unique: true } }] }
   ])
 
   const appDiv = utils.$<HTMLDivElement>("#app")
@@ -51,14 +58,67 @@ export async function initSystem(): Promise<System> {
     idb,
     appDiv,
     programs: [],
-    DEBUG: debug
+    DEBUG: debug,
+    fsRootId: '',
+  }
+
+  const fsRoot = await FileSystem.GetRoot()
+
+  SYSTEM.fsRootId = fsRoot?.id || ''
+  if (!fsRoot) {
+    const newFsRoot = await SystemFile.Create({
+      name: '/',
+      contents: null,
+      type: SystemFileType.DIRECTORY,
+      children: [],
+      parent: ""
+    })
+
+    const defaultSystemDirectories = [
+      await SystemFile.Create({
+        name: 'tmp',
+        contents: null,
+        type: SystemFileType.DIRECTORY,
+        children: [],
+        parent: newFsRoot.id,
+      }),
+      await SystemFile.Create({
+        name: 'proc',
+        contents: null,
+        type: SystemFileType.DIRECTORY,
+        children: [],
+        parent: newFsRoot.id,
+      }),
+      await SystemFile.Create({
+        name: 'init',
+        contents: null,
+        type: SystemFileType.DIRECTORY,
+        children: [],
+        parent: newFsRoot.id,
+      }),
+    ]
+
+    for (const sysDir of defaultSystemDirectories) {
+      await sysDir.save()
+      newFsRoot.children.push(sysDir.id)
+    }
+
+    await newFsRoot.save()
+    SYSTEM.fsRootId = newFsRoot.id
+  } else {
+    const proc = await FileSystem.GetByPath("/proc")
+
+    if (!proc) throw new Error(`proc folder was not found at startup`)
+
+    await FileSystem.Delete(proc.children)
+    proc.children = []
+    await proc.save()
   }
 
   return SYSTEM
 }
 
-export async function startProgram(newProgram: Program<any>) {
-  const program = await newProgram.Init()
+export async function startProgram(program: Program<any>) {
   program.id = crypto.randomUUID()
 
   const container = document.createElement("div")
@@ -91,6 +151,16 @@ export async function startProgram(newProgram: Program<any>) {
   // Close button
   closeButton.addEventListener("click", async () => {
     await program.Close()
+
+    const proc = await FileSystem.GetByPath("/proc")
+
+    if (!proc) throw new Error(`proc folder was not found at startup`)
+
+    const processId = proc.children.find(p => p === program.id)
+    if (!processId) throw new Error(`No program with id ${program.id} found in proc`)
+    proc.children = proc.children.filter(c => c !== program.id)
+    await FileSystem.Delete([processId])
+    await proc.save()
 
     const systemProgram = SYSTEM.programs.findIndex(p => p.id === program.id)
 
@@ -176,4 +246,20 @@ export async function startProgram(newProgram: Program<any>) {
   SYSTEM.appDiv.appendChild(container)
 
   SYSTEM.programs.push(program)
+
+  const proc = await FileSystem.GetByPath("/proc")
+  if (proc) {
+    const process = await SystemFile.Create({
+      id: program.id,
+      name: `${program.title}-${program.id}`,
+      contents: null,
+      type: SystemFileType.DIRECTORY,
+      children: [],
+      parent: proc.id,
+    })
+    await process.childOf(proc)
+  } else {
+    console.warn("No proc folder was found in the system")
+  }
+
 }
