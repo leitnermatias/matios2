@@ -62,6 +62,10 @@ export async function initSystem(): Promise<System> {
     fsRootId: '',
   }
 
+  const systemInfo = document.createElement("p")
+  systemInfo.innerText = `IDB Version: ${idb.version}`
+  SYSTEM.appDiv.appendChild(systemInfo)
+
   const fsRoot = await FileSystem.GetRoot()
 
   SYSTEM.fsRootId = fsRoot?.id || ''
