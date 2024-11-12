@@ -31,6 +31,17 @@ body {
   overflow: hidden;
 }
 
+#errors {
+  position: absolute;
+  z-index: 9999;
+  bottom: 1px;
+  right: 1px;
+  width: 25vw;
+  height: 25vh;
+  display: flex;
+  flex-direction: column-reverse;
+}
+
 #top-nav {
   background-color: var(--default-bg-primary);
   width: 100%;
