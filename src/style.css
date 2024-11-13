@@ -40,6 +40,8 @@ body {
 .desktop-icon {
   display: flex;
   flex-direction: column;
+  justify-content: center;
+  align-items: center;
   background-color: transparent;
   border: 1px solid white;
   padding: 5px;
