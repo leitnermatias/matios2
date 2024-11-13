@@ -1,6 +1,6 @@
 import { startProgram } from ".";
-import apps from "../apps"
-import utils from "../utils";
+import apps from "@/apps"
+import utils from "@/utils";
 
 export async function initDesktop() {
     const desktop = utils.$("#desktop")

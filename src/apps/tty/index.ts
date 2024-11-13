@@ -1,5 +1,5 @@
-import { FileSystem } from "../system/file";
-import { Program } from "../system/program";
+import { FileSystem } from "@/system/file";
+import { Program } from "@/system/program";
 
 export interface TerminalCommandResult {
     input: string;

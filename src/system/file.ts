@@ -1,4 +1,4 @@
-import { SYSTEM } from "../system";
+import { SYSTEM } from "@/system";
 
 export enum SystemFileType {
     DIRECTORY = 'directory',

@@ -1,4 +1,4 @@
-import utils from "../utils";
+import utils from "@/utils";
 
 const MAX_NOTIFICATIONS = 3
 export function removeNotification(timeout: number, notification: HTMLElement) {

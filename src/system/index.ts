@@ -1,4 +1,4 @@
-import utils from "../utils";
+import utils from "@/utils";
 import { Program } from "./program";
 import { FileSystem, SystemFile, SystemFileType } from "./file";
 import { initDesktop } from "./desktop";
