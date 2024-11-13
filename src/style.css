@@ -12,7 +12,8 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  --default-bg-primary: #404040
+  --default-bg-primary: #404040;
+  --default-bg-secondary: #202020;
 }
 
 body {
@@ -29,6 +30,24 @@ body {
   margin: 0px;
   text-align: center;
   overflow: hidden;
+}
+
+#desktop {
+  display: flex;
+  padding: 10px 10px;
+}
+
+.desktop-icon {
+  display: flex;
+  flex-direction: column;
+  background-color: transparent;
+  border: 1px solid white;
+  padding: 5px;
+  cursor: pointer;
+}
+
+.desktop-icon:hover {
+  background-color: var(--default-bg-secondary);
 }
 
 #notifications {

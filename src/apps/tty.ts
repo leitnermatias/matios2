@@ -268,7 +268,6 @@ export class Terminal extends Program<TerminalState> {
         return;
     }
 
-
     getCmdInput(input: string) {
         const splitted = input.split(" ")
         return {
@@ -277,3 +276,8 @@ export class Terminal extends Program<TerminalState> {
         }
     }
 }
+
+Terminal.icon = document.createElement("span")
+Terminal.icon.innerText = "T"
+Terminal.icon.style.fontSize = "43px"
+Terminal.icon.style.color = "red"

@@ -1,6 +1,7 @@
 import utils from "../utils";
 import { Program } from "./program";
 import { FileSystem, SystemFile, SystemFileType } from "./file";
+import { initDesktop } from "./desktop";
 
 export interface System {
   idb: IDBDatabase;
@@ -138,6 +139,8 @@ export async function initSystem(): Promise<System> {
     proc.children = []
     await proc.save()
   }
+
+  await initDesktop()
 
   return SYSTEM
 }
