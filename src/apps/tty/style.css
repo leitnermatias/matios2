@@ -1,0 +1,33 @@
+.terminal-cmd-box {
+    display: flex;
+    width: 100%;
+    align-items: center;
+}
+
+.terminal-viewport {
+    background: #00000031;
+    color: white;
+    text-align: left;
+    padding: 10px;
+    font-family: monospace;
+    overflow: scroll;
+}
+
+.terminal-history-view {
+    display: flex;
+    flex-direction: column;
+}
+
+.terminal-cmd-input {
+    color: green;
+    background: transparent;
+    border: none;
+    flex: 1;
+    width: 100%;
+}
+
+.terminal-prefix {
+    margin-right: 2px;
+    color: green;
+    flex-shrink: 0;
+}

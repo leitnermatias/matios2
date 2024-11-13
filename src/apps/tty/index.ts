@@ -1,5 +1,6 @@
 import { FileSystem } from "@/system/file";
 import { Program } from "@/system/program";
+import "./style.css"
 
 export interface TerminalCommandResult {
     input: string;
@@ -166,45 +167,28 @@ export class Terminal extends Program<TerminalState> {
             },
         })
 
-        const viewportStyle = this.viewport.style;
-        viewportStyle.background = "#00000031";
-        viewportStyle.color = "white";
-        viewportStyle.textAlign = 'left';
-        viewportStyle.padding = '10px';
-        viewportStyle.fontFamily = 'monospace';
-        viewportStyle.overflow = 'scroll';
+        this.viewport.classList.add("terminal-viewport")
 
         // History
-        this.state.historyView.style.display = 'flex';
-        this.state.historyView.style.flexDirection = 'column';
+        this.state.historyView.classList.add("terminal-history-view")
         this.viewport.appendChild(this.state.historyView);
-
 
         // CMD box
         const cmdWrapper = document.createElement('div');
-        cmdWrapper.style.display = 'flex';
-        cmdWrapper.style.alignItems = 'center';
-        cmdWrapper.style.width = "100%";
+        cmdWrapper.classList.add("terminal-cmd-box")
 
         // Prefix
         const prefix = document.createElement('span');
-        prefix.style.marginRight = '2px';
-        prefix.style.color = 'green';
-        prefix.style.flexShrink = '0';
+        prefix.classList.add("terminal-prefix")
         prefix.innerText = `${this.state.currentPath} >`;
         cmdWrapper.appendChild(prefix);
 
 
         // Input
-        const inputStyle = this.state.input.style;
-        inputStyle.color = "green";
-        inputStyle.background = "transparent";
-        inputStyle.border = "none";
-        inputStyle.flex = '1'; // Ensures the input takes up remaining space
-        inputStyle.width = '100%'; // Fills remaining space in cmdWrapper
+        this.state.input.classList.add("terminal-cmd-input")
 
         this.state.input.addEventListener('focus', () => {
-            inputStyle.outline = 'none';
+            this.state.input.style.outline = 'none';
         });
 
         this.state.input.addEventListener('keydown', (ev) => {
