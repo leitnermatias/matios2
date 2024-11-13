@@ -1,15 +1,8 @@
 import { startProgram } from ".";
-import { Terminal } from "../apps/tty";
+import apps from "../apps"
 import utils from "../utils";
 
 export async function initDesktop() {
-    const apps = [
-        {
-            name: "Terminal",
-            program: Terminal
-        }
-    ]
-
     const desktop = utils.$("#desktop")
 
     if (!desktop) throw new Error(`#desktop was not found at desktop init`)
@@ -19,13 +12,13 @@ export async function initDesktop() {
         applicationBtn.classList.add("desktop-icon")
 
         applicationBtn.onclick = async () => {
-            const program = new app.program()
+            const program = new app()
             await startProgram(program)
         }
 
         const defaultIcon = document.createElement("span")
 
-        applicationBtn.appendChild(app.program.icon || defaultIcon)
+        applicationBtn.appendChild(app.icon || defaultIcon)
         const text = document.createElement("span")
         text.innerText = app.name
         applicationBtn.appendChild(text)

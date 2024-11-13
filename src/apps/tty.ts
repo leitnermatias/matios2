@@ -281,3 +281,5 @@ Terminal.icon = document.createElement("span")
 Terminal.icon.innerText = "T"
 Terminal.icon.style.fontSize = "43px"
 Terminal.icon.style.color = "red"
+
+export default Terminal
