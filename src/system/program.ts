@@ -9,6 +9,7 @@ export interface ProgramArgs<T> {
 
 export abstract class Program<T> {
     static icon?: HTMLElement;
+    static name: string;
     id?: string;
     viewport: HTMLElement;
     title: string;

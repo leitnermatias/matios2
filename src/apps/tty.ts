@@ -19,6 +19,7 @@ export interface TerminalState {
 }
 
 export class Terminal extends Program<TerminalState> {
+    static name: string = "Terminal"
     constructor() {
         super({
             title: "Terminal",
