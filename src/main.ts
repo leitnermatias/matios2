@@ -23,7 +23,7 @@ window.onload = async () => {
     systemNotify("Error on system init", "error", 10)
     return
   }
-  systemNotify("System init with success", "success", 5)
+  systemNotify("System successfully started", "success", 5)
 
   requestAnimationFrame(loop)
 }
