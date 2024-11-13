@@ -12,6 +12,7 @@ async function loop(time: DOMHighResTimeStamp) {
     })
     requestAnimationFrame(loop)
   } catch (error) {
+    console.error(error)
     systemNotify('Error in execution', 'error', 60)
   }
 }
@@ -20,6 +21,7 @@ window.onload = async () => {
   try {
     await initSystem()
   } catch (error) {
+    console.error(error)
     systemNotify("Error on system init", "error", 10)
     return
   }

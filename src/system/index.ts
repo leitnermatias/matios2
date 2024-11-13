@@ -2,6 +2,7 @@ import utils from "../utils";
 import { Program } from "./program";
 import { FileSystem, SystemFile, SystemFileType } from "./file";
 import { initDesktop } from "./desktop";
+import { customNotify, removeNotification, systemNotify } from "./notifications";
 
 export interface System {
   idb: IDBDatabase;
@@ -20,9 +21,22 @@ export interface IDBTable {
 
 export async function initIDB(tables: IDBTable[]): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open('system', 5);
+    const request = indexedDB.open('system', 12);
 
     request.onupgradeneeded = (event) => {
+      const notification = document.createElement("div")
+      notification.style.display = "flex"
+      notification.style.gap = "5px"
+      const message = document.createElement("span")
+      const spinner = document.createElement("div")
+      spinner.classList.add("spinner")
+      spinner.style.width = "20px"
+      spinner.style.height = "20px"
+      message.innerText = "The internal database is updating"
+      notification.appendChild(spinner)
+      notification.appendChild(message)
+      const notificationTimeout = customNotify(notification, 100)
+
       const db = (event.target as IDBOpenDBRequest).result;
 
       tables.forEach(table => {
@@ -34,10 +48,18 @@ export async function initIDB(tables: IDBTable[]): Promise<IDBDatabase> {
           })
         }
       })
+
+      removeNotification(notificationTimeout, notification)
+      systemNotify("Internal database updated", 'success')
     };
 
-    request.onsuccess = (event) => resolve((event.target as IDBOpenDBRequest).result);
-    request.onerror = (event) => reject((event.target as IDBOpenDBRequest).error);
+    request.onsuccess = (event) => {
+      resolve((event.target as IDBOpenDBRequest).result)
+    };
+    request.onerror = (event) => {
+      systemNotify("Error with the internal database", "error", 10)
+      reject((event.target as IDBOpenDBRequest).error)
+    };
   });
 }
 

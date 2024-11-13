@@ -21,6 +21,8 @@ export function addNotification(notification: HTMLElement, notifications: HTMLEl
     const timeout = setTimeout(() => removeNotification(timeout, notification), seconds * 1000)
 
     notification.onclick = () => removeNotification(timeout, notification)
+
+    return timeout
 }
 
 export function systemNotify(msg: string, type: 'error' | 'warning' | 'success', seconds: number = 3) {
@@ -36,7 +38,7 @@ export function systemNotify(msg: string, type: 'error' | 'warning' | 'success',
 
     notification.classList.add(type)
 
-    addNotification(notification, notifications, seconds)
+    return addNotification(notification, notifications, seconds)
 
 }
 
@@ -45,5 +47,5 @@ export function customNotify(element: HTMLElement, seconds: number = 3) {
 
     if (!notifications) throw new Error(`No notifications container was found`)
 
-    addNotification(element, notifications, seconds)
+    return addNotification(element, notifications, seconds)
 }
