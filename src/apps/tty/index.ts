@@ -115,7 +115,9 @@ export class Terminal extends Program {
     }
 
     async help(input: string): Promise<TerminalCommandResult> {
+        const dontShow = ['notFound']
         const availableCommands = Object.keys(this.commands)
+            .filter(c => !dontShow.includes(c))
             .map((c) => `- ${c}`)
             .join(`
             `)
