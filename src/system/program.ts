@@ -7,24 +7,14 @@ export interface ProgramArgs<T> {
     height: string;
 }
 
-export abstract class Program<T> {
+export abstract class Program {
     static icon?: HTMLElement;
     static name: string;
     id?: string;
-    viewport: HTMLElement;
-    title: string;
-    state: T;
-    width: string;
-    height: string;
-
-    constructor(args: ProgramArgs<T>) {
-        this.id = args.id;
-        this.viewport = args.viewport;
-        this.title = args.title;
-        this.state = args.state;
-        this.width = args.width;
-        this.height = args.height;
-    }
+    viewport: HTMLElement = document.createElement("div");
+    title: string = "";
+    width: string = `${window.innerWidth / 2}px`;
+    height: string = `${window.innerHeight / 2}px`;
 
     abstract Update(time: DOMHighResTimeStamp): Promise<void>
     abstract Draw(time: DOMHighResTimeStamp): Promise<void>

@@ -7,171 +7,154 @@ export interface TerminalCommandResult {
     output: string;
 }
 export type TerminalCommand = (input: string) => Promise<TerminalCommandResult>
+export type DefaultCommands = { [key: string]: { f: TerminalCommand, help: string } }
 
-export interface TerminalState {
-    historyView: HTMLDivElement;
-    history: TerminalCommandResult[],
-    cmd: string;
-    currentPath: string;
-    input: HTMLInputElement;
-    keyMap: { [key: string]: boolean };
-    lastTimeStamp: number;
-    defaultCommands: { [key: string]: { f: TerminalCommand, help: string } }
-}
-
-export class Terminal extends Program<TerminalState> {
+export class Terminal extends Program {
     static name: string = "Terminal"
-    constructor() {
-        super({
-            title: "Terminal",
-            viewport: document.createElement("div"),
-            width: `${window.innerWidth / 2}px`,
-            height: `${window.innerHeight / 2}px`,
-            state: {
-                historyView: document.createElement('div'),
-                history: [],
-                cmd: '',
-                currentPath: '/',
-                input: document.createElement('input'),
-                keyMap: {},
-                lastTimeStamp: 0,
-                defaultCommands: {
-                    help: {
-                        f: async (input) => {
-                            let output = `
-                                To receive help for a particular command, type help <command name>
-            
-                                Available default commands:
-                                - clear
-                                - ls
-                                - cd
-                                - help
-                            `;
+    title = 'Terminal'
 
-                            const splitted = input.split(" ");
+    historyView = document.createElement('div')
+    history: TerminalCommandResult[] = []
+    cmd = ''
+    currentPath = '/'
+    input = document.createElement('input')
+    defaultCommands: DefaultCommands = {
+        help: {
+            f: async (input) => {
+                let output = `
+                    To receive help for a particular command, type help <command name>
 
-                            if (splitted.length > 1) {
-                                const cmdName = splitted[1];
-                                const cmd = this.state.defaultCommands[cmdName];
+                    Available default commands:
+                    - clear
+                    - ls
+                    - cd
+                    - help
+                `;
 
-                                if (cmd && cmd.help !== '') {
-                                    output = cmd.help;
-                                } else {
-                                    output = `${cmdName} is not a valid command or it doesn't provide any help information.`;
-                                }
-                            }
+                const splitted = input.split(" ");
 
-                            return {
-                                input,
-                                output
-                            };
-                        },
-                        help: ``
-                    },
-                    notFound: {
-                        f: async (input) => ({ input, output: `The command ${input.split(' ')[0]} does not exist.` }),
-                        help: ``
-                    },
-                    clear: {
-                        f: async () => {
-                            this.state.history = [];
-                            this.state.historyView.innerHTML = '';
-                            return {
-                                input: '',
-                                output: ''
-                            };
-                        },
-                        help: `Removes all previous output from the terminal and cleans up the history.`
-                    },
-                    cd: {
-                        f: async (input) => {
-                            return {
-                                input,
-                                output: 'Not implemented yet'
-                            };
-                        },
-                        help: `Moves the current position in the filesystem to a new one
-                               Usage: cd <path>
-                        `
-                    },
-                    ls: {
-                        f: async (input) => {
-                            const parsed = this.getCmdInput(input);
+                if (splitted.length > 1) {
+                    const cmdName = splitted[1];
+                    const cmd = this.defaultCommands[cmdName];
 
-                            if (!parsed.args || parsed.args.length > 1) {
-                                return {
-                                    input,
-                                    output: `Invalid number of arguments for ls.
-                                             Type help ls for information about usage.
-                                    `
-                                };
-                            }
-
-                            const isRelative = parsed.args[0]?.startsWith('./') || !parsed.args[0]?.startsWith('/');
-                            const isCurrentDirectoryPath = isRelative && !parsed.args[0]?.startsWith('./') && !parsed.args[0]?.startsWith('/');
-
-                            let path = this.state.currentPath;
-                            if (parsed.args?.length >= 1 && !isRelative) {
-                                path = parsed.args[0];
-                            } else if (parsed.args?.length > 0) {
-                                const relativePath = parsed.args[0].split('/').slice(isCurrentDirectoryPath ? 0 : 1).join('/');
-                                path = `${this.state.currentPath === '/' ? '' : this.state.currentPath}/${relativePath}`;
-                            }
-
-                            const target = await FileSystem.GetByPath(path);
-
-                            if (!target) {
-                                return {
-                                    input,
-                                    output: `${path} was not found in the system`
-                                };
-                            } else {
-                                const childrens = await FileSystem.GetById(...target.children);
-                                return {
-                                    input,
-                                    output: childrens.map(c => c.name).join('  ')
-                                };
-                            }
-
-
-
-                        },
-                        help: `Shows the contents of the given path in the filesystem
-                               Usage:
-                               - For showing the contents of the current position: ls
-                               - For showing the contents of a particular path: ls <path>
-                        `
-                    },
-                    mkdir: {
-                        f: async (input) => {
-                            const parsed = this.getCmdInput(input);
-
-                            if (parsed.args.length !== 1) {
-                                return {
-                                    input,
-                                    output: `Invalid number of arguments for mkdir. 
-                                             Type help mkdir for information about usage.`
-                                };
-                            }
-
-                            return {
-                                input,
-                                output: `${JSON.stringify(parsed)}`
-                            };
-                        },
-                        help: `Creates a directory in the given path
-                               Usage: mkdir <path>
-                        `
+                    if (cmd && cmd.help !== '') {
+                        output = cmd.help;
+                    } else {
+                        output = `${cmdName} is not a valid command or it doesn't provide any help information.`;
                     }
                 }
+
+                return {
+                    input,
+                    output
+                };
             },
-        })
+            help: ``
+        },
+        notFound: {
+            f: async (input) => ({ input, output: `The command ${input.split(' ')[0]} does not exist.` }),
+            help: ``
+        },
+        clear: {
+            f: async () => {
+                this.history = [];
+                this.historyView.innerHTML = '';
+                return {
+                    input: '',
+                    output: ''
+                };
+            },
+            help: `Removes all previous output from the terminal and cleans up the history.`
+        },
+        cd: {
+            f: async (input) => {
+                return {
+                    input,
+                    output: 'Not implemented yet'
+                };
+            },
+            help: `Moves the current position in the filesystem to a new one
+                   Usage: cd <path>
+            `
+        },
+        ls: {
+            f: async (input) => {
+                const parsed = this.getCmdInput(input);
+
+                if (!parsed.args || parsed.args.length > 1) {
+                    return {
+                        input,
+                        output: `Invalid number of arguments for ls.
+                                 Type help ls for information about usage.
+                        `
+                    };
+                }
+
+                const isRelative = parsed.args[0]?.startsWith('./') || !parsed.args[0]?.startsWith('/');
+                const isCurrentDirectoryPath = isRelative && !parsed.args[0]?.startsWith('./') && !parsed.args[0]?.startsWith('/');
+
+                let path = this.currentPath;
+                if (parsed.args?.length >= 1 && !isRelative) {
+                    path = parsed.args[0];
+                } else if (parsed.args?.length > 0) {
+                    const relativePath = parsed.args[0].split('/').slice(isCurrentDirectoryPath ? 0 : 1).join('/');
+                    path = `${this.currentPath === '/' ? '' : this.currentPath}/${relativePath}`;
+                }
+
+                const target = await FileSystem.GetByPath(path);
+
+                if (!target) {
+                    return {
+                        input,
+                        output: `${path} was not found in the system`
+                    };
+                } else {
+                    const childrens = await FileSystem.GetById(...target.children);
+                    return {
+                        input,
+                        output: childrens.map(c => c.name).join('  ')
+                    };
+                }
+
+
+
+            },
+            help: `Shows the contents of the given path in the filesystem
+                   Usage:
+                   - For showing the contents of the current position: ls
+                   - For showing the contents of a particular path: ls <path>
+            `
+        },
+        mkdir: {
+            f: async (input) => {
+                const parsed = this.getCmdInput(input);
+
+                if (parsed.args.length !== 1) {
+                    return {
+                        input,
+                        output: `Invalid number of arguments for mkdir. 
+                                 Type help mkdir for information about usage.`
+                    };
+                }
+
+                return {
+                    input,
+                    output: `${JSON.stringify(parsed)}`
+                };
+            },
+            help: `Creates a directory in the given path
+                   Usage: mkdir <path>
+            `
+        }
+    }
+    constructor() {
+        super()
 
         this.viewport.classList.add("terminal-viewport")
 
         // History
-        this.state.historyView.classList.add("terminal-history-view")
-        this.viewport.appendChild(this.state.historyView);
+        this.historyView.classList.add("terminal-history-view")
+        this.viewport.appendChild(this.historyView);
 
         // CMD box
         const cmdWrapper = document.createElement('div');
@@ -180,73 +163,66 @@ export class Terminal extends Program<TerminalState> {
         // Prefix
         const prefix = document.createElement('span');
         prefix.classList.add("terminal-prefix")
-        prefix.innerText = `${this.state.currentPath} >`;
+        prefix.innerText = `${this.currentPath} >`;
         cmdWrapper.appendChild(prefix);
 
 
         // Input
-        this.state.input.classList.add("terminal-cmd-input")
+        this.input.classList.add("terminal-cmd-input")
 
-        this.state.input.addEventListener('focus', () => {
-            this.state.input.style.outline = 'none';
+        this.input.addEventListener('focus', () => {
+            this.input.style.outline = 'none';
         });
 
-        this.state.input.addEventListener('keydown', (ev) => {
-            if (this.state.cmd !== '') return;
-            this.state.keyMap[ev.key] = true;
+        this.input.addEventListener('keydown', (ev) => {
+            if (this.cmd !== '') return;
             if (ev.key === 'Enter') {
-                this.state.cmd = 'enter';
+                this.cmd = 'enter';
             }
         });
 
-        this.state.input.addEventListener('keyup', (ev) => {
-            delete this.state.keyMap[ev.key];
-        });
-
-        cmdWrapper.appendChild(this.state.input);
+        cmdWrapper.appendChild(this.input);
 
         this.viewport.appendChild(cmdWrapper);
 
-        this.state.input.focus();
+        this.input.focus();
     }
 
     async Update(_time: DOMHighResTimeStamp): Promise<void> {
-        // SYSTEM.DEBUG.innerText = JSON.stringify(this.state)
-        if (this.state.cmd === 'enter') {
-            const cmdName = this.state.input.value.split(' ')[0];
-            const cmd = this.state.defaultCommands[cmdName] || this.state.defaultCommands.notFound;
+        if (this.cmd === 'enter') {
+            const cmdName = this.input.value.split(' ')[0];
+            const cmd = this.defaultCommands[cmdName] || this.defaultCommands.notFound;
             let result = {
-                input: this.state.input.value,
+                input: this.input.value,
                 output: ``
             };
             try {
-                result = await cmd.f(this.state.input.value);
+                result = await cmd.f(this.input.value);
             } catch (error) {
-                result.output = `Error while trying to execute command: ${this.state.input.value}
+                result.output = `Error while trying to execute command: ${this.input.value}
                 ${error}
                 `;
             }
 
-            this.state.history.push({
+            this.history.push({
                 input: result.input,
                 output: result.output
             });
-            this.state.input.value = '';
-            this.state.cmd = '';
+            this.input.value = '';
+            this.cmd = '';
         }
-        this.state.lastTimeStamp = 0;
     }
     async Draw(_time: DOMHighResTimeStamp): Promise<void> {
-        this.state.historyView.innerHTML = '';
-        this.state.history.forEach(cmd => {
+        this.historyView.innerHTML = '';
+        this.history.forEach(cmd => {
             if (cmd.input !== '') {
                 const prefix = document.createElement('span');
                 prefix.innerText = `> ${cmd.input}`;
-                this.state.historyView.appendChild(prefix);
+                this.historyView.appendChild(prefix);
             }
             const span = document.createElement('span');
             span.innerText = cmd.output;
-            this.state.historyView.appendChild(span);
+            this.historyView.appendChild(span);
         });
     }
     async Close(): Promise<void> {
