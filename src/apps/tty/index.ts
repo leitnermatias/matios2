@@ -89,7 +89,6 @@ export class Terminal extends Program {
             try {
                 result = await cmd.call(this, this.input.value);
             } catch (error) {
-                console.error('a', error)
                 result.output = `Error while trying to execute command: ${this.input.value}
                 ${error}
                 `;
@@ -163,10 +162,9 @@ export class Terminal extends Program {
         if (options.pathIndexes) {
             for (const argNum of options.pathIndexes) {
                 const rawPath = information.parsedInput.args[argNum]
-                if (!rawPath) continue
-                const isRelative = this.isRelativePath(rawPath)
+                const isRelative = rawPath ? this.isRelativePath(rawPath) : false
                 const parsed = isRelative ? this.normalizeRelativePath(rawPath, this.currentPath)  : rawPath
-                const target = await FileSystem.GetByPath(parsed)
+                const target = !!rawPath ? await FileSystem.GetByPath(parsed) : null
 
                 information.paths.push({
                     isRelative,
@@ -229,15 +227,23 @@ export class Terminal extends Program {
 
     async ls(input: string): Promise<TerminalCommandResult> {
         const inputInformation = await this.getInputInformation(input, {
-            validations: [],
+            validations: [
+                (inputInformation) => {
+                    if (inputInformation.parsedInput.args.length > 1) {
+                        return {
+                            input,
+                            output: `Invalid number of arguments for ls (${inputInformation.parsedInput.args.length})`
+                        }
+                    }
+
+                }
+            ],
             pathIndexes: [0]
         })
 
         if (inputInformation.result) return inputInformation.result;
 
-        const path = inputInformation.paths[0]?.parsed || this.currentPath
-
-        const target = await FileSystem.GetByPath(path);
+        const target = inputInformation.paths[0]?.target || await FileSystem.GetByPath(this.currentPath)
 
         if (!target) {
             return {
