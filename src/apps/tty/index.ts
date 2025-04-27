@@ -5,6 +5,10 @@ import "./style.css"
 export interface TerminalCommandResult {
     input: string;
     output: string;
+    style?: {
+        classes?: string[];
+        raw?: string;
+    }
 }
 export type TerminalCommand = (input: string) => Promise<TerminalCommandResult>
 export type DefaultCommands = { [key: string]: TerminalCommand }
@@ -84,9 +88,9 @@ export class Terminal extends Program {
         if (this.cmd === 'enter') {
             const cmdName = this.input.value.split(' ')[0];
             const cmd = this.commands[cmdName] || this.commands.notFound;
-            let result = {
+            let result: TerminalCommandResult = {
                 input: this.input.value,
-                output: ``
+                output: ``,
             };
             try {
                 result = await cmd.call(this, this.input.value);
@@ -98,7 +102,8 @@ export class Terminal extends Program {
 
             this.history.push({
                 input: result.input,
-                output: result.output
+                output: result.output,
+                style: result.style,
             });
             this.input.value = '';
             this.cmd = '';
@@ -114,7 +119,11 @@ export class Terminal extends Program {
                 this.historyView.appendChild(prefix);
             }
             const span = document.createElement('span');
-            span.innerText = cmd.output;
+            span.innerHTML = cmd.output;
+            if (cmd.style) {
+                span.style = cmd.style.raw || '';
+                span.classList.add(...cmd.style.classes || [])
+            }
             this.historyView.appendChild(span);
         });
     }
@@ -157,7 +166,7 @@ export class Terminal extends Program {
             for (const argNum of options.pathIndexes) {
                 const rawPath = information.parsedInput.args[argNum]
                 const isRelative = rawPath ? this.isRelativePath(rawPath) : false
-                const parsed = isRelative ? this.normalizeRelativePath(rawPath, this.currentPath)  : rawPath
+                const parsed = isRelative ? this.normalizeRelativePath(rawPath, this.currentPath) : rawPath
                 const target = !!rawPath ? await FileSystem.GetByPath(parsed) : null
 
                 information.paths.push({
@@ -238,10 +247,22 @@ export class Terminal extends Program {
                     if (inputInformation.parsedInput.args.length > 1 && Object.keys(inputInformation.commandOptions).length === 0) {
                         return {
                             input,
-                            output: `Invalid number of arguments for ls (${inputInformation.parsedInput.args.length})`
+                            output: `Invalid number of arguments for ls (${inputInformation.parsedInput.args.length})`,
+                            style: {
+                                raw: 'color: red;'
+                            }
                         }
                     }
 
+                    if (!inputInformation.paths[0]?.target && inputInformation.parsedInput.args.length > 0) {
+                        return {
+                            input,
+                            output: `${inputInformation.paths[0]?.parsed} was not found in the system`,
+                            style: {
+                                raw: 'color: red;'
+                            }
+                        };
+                    }
                 }
             ],
             pathIndexes: [0]
@@ -251,18 +272,12 @@ export class Terminal extends Program {
 
         const target = inputInformation.paths[0]?.target || await FileSystem.GetByPath(this.currentPath)
 
-        if (!target) {
-            return {
-                input,
-                output: `${inputInformation.paths[0]?.parsed} was not found in the system`
-            };
-        } else {
-            const childrens = await FileSystem.GetById(...target.children);
-            return {
-                input,
-                output: childrens.map(c => c.name).join('  ')
-            };
-        }
+
+        const childrens = await FileSystem.GetById(...target!.children);
+        return {
+            input,
+            output: childrens.map(c => c.name).join('  ')
+        };
     }
 }
 
