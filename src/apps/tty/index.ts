@@ -20,7 +20,6 @@ export interface ParsedCommandInput {
 export interface InputInformation {
     result?: TerminalCommandResult;
     paths: {
-        isRelative: boolean;
         parsed: string;
         target: SystemFile<unknown> | null;
     }[];
@@ -42,7 +41,11 @@ export class Terminal extends Program {
         clear: this.clear,
         notFound: this.notFound,
         ls: this.ls,
+        cd: this.cd,
+        pwd: this.pwd
     }
+    cmdWrapper = document.createElement('div');
+    prefix = document.createElement('span');
     constructor() {
         super()
 
@@ -53,14 +56,12 @@ export class Terminal extends Program {
         this.viewport.appendChild(this.historyView);
 
         // CMD box
-        const cmdWrapper = document.createElement('div');
-        cmdWrapper.classList.add("terminal-cmd-box")
+        this.cmdWrapper.classList.add("terminal-cmd-box")
 
         // Prefix
-        const prefix = document.createElement('span');
-        prefix.classList.add("terminal-prefix")
-        prefix.innerText = `${this.currentPath} >`;
-        cmdWrapper.appendChild(prefix);
+        this.prefix.classList.add("terminal-prefix")
+        this.prefix.innerText = `${this.currentPath} >`;
+        this.cmdWrapper.appendChild(this.prefix);
 
 
         // Input
@@ -77,9 +78,9 @@ export class Terminal extends Program {
             }
         });
 
-        cmdWrapper.appendChild(this.input);
+        this.cmdWrapper.appendChild(this.input);
 
-        this.viewport.appendChild(cmdWrapper);
+        this.viewport.appendChild(this.cmdWrapper);
 
         this.input.focus();
     }
@@ -126,6 +127,8 @@ export class Terminal extends Program {
             }
             this.historyView.appendChild(span);
         });
+
+        this.prefix.innerText = `${this.currentPath} >`;
     }
 
     async Close(): Promise<void> {
@@ -141,14 +144,27 @@ export class Terminal extends Program {
         }
     }
 
-    isRelativePath(path: string) {
-        return path.startsWith('./') || !path.startsWith('/');
+    normalizePath(path: string) {
+        const segments = path.split('/');
+        const stack: string[] = [];
+      
+        for (const segment of segments) {
+          if (segment === '' || segment === '.') {
+            continue;
+          } else if (segment === '..') {
+            if (stack.length) {
+              stack.pop();
+            }
+          } else {
+            stack.push(segment);
+          }
+        }
+      
+        return '/' + stack.join('/');
     }
 
-    normalizeRelativePath(relativePath: string, currentPath: string) {
-        const isCurrentDirectoryPath = !relativePath.startsWith('./')
-        const formatted = relativePath.split('/').slice(isCurrentDirectoryPath ? 0 : 1).join('/');
-        return `${currentPath === '/' ? '' : currentPath}/${formatted}`;
+    pathContainsRelativeReference(path: string) {
+        return path.split("/").some(portion => portion === '..')
     }
 
     async getInputInformation(input: string, options: {
@@ -165,12 +181,10 @@ export class Terminal extends Program {
         if (options.pathIndexes) {
             for (const argNum of options.pathIndexes) {
                 const rawPath = information.parsedInput.args[argNum]
-                const isRelative = rawPath ? this.isRelativePath(rawPath) : false
-                const parsed = isRelative ? this.normalizeRelativePath(rawPath, this.currentPath) : rawPath
+                const parsed = this.normalizePath(rawPath)
                 const target = !!rawPath ? await FileSystem.GetByPath(parsed) : null
-
+                
                 information.paths.push({
-                    isRelative,
                     parsed,
                     target,
                 })
@@ -278,6 +292,58 @@ export class Terminal extends Program {
             input,
             output: childrens.map(c => c.name).join('  ')
         };
+    }
+
+    async cd(input: string): Promise<TerminalCommandResult> {
+        const inputInformation = await this.getInputInformation(input, {
+            validations: [
+                (inputInformation) => {
+                    if (!inputInformation.paths[0]?.target) {
+                        return {
+                            input,
+                            output: `Invalid path for ${inputInformation.paths[0]?.parsed}`,
+                            style: {
+                                raw: `color: red;`
+                            }
+                        }
+                    }
+                }
+            ],
+            pathIndexes: [0]
+        })
+
+        if (inputInformation.result) return inputInformation.result
+        
+        if (inputInformation.parsedInput.args[0] === "..") {
+            const splitted = this.currentPath.split("/")
+            if (splitted.length === 2) {
+                this.currentPath = "/"
+                return {
+                    input,
+                    output: ``
+                }
+            }
+
+            const previousPath = splitted.slice(0, -1).join("/")
+
+            if (previousPath) this.currentPath = previousPath
+        } else {
+            const path = inputInformation.paths[0]
+
+            this.currentPath = path.parsed
+        }
+
+        return {
+            input,
+            output: ``
+        }
+    }
+
+    async pwd(input: string): Promise<TerminalCommandResult> {
+        return {
+            input,
+            output: this.currentPath
+        }
     }
 }
 
