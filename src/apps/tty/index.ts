@@ -1,4 +1,4 @@
-import { FileSystem } from "@/system/file";
+import { FileSystem, SystemFile } from "@/system/file";
 import { Program } from "@/system/program";
 import "./style.css"
 
@@ -8,6 +8,19 @@ export interface TerminalCommandResult {
 }
 export type TerminalCommand = (input: string) => Promise<TerminalCommandResult>
 export type DefaultCommands = { [key: string]: TerminalCommand }
+export interface ParsedCommandInput {
+    cmdName: string;
+    args: string[];
+    input: string;
+}
+export interface InputInformation {
+    result?: TerminalCommandResult;
+    paths: {
+        isRelative: boolean;
+        parsed: string;
+    }[];
+    parsedInput: ParsedCommandInput;
+}
 
 export class Terminal extends Program {
     static name: string = "Terminal"
@@ -76,6 +89,7 @@ export class Terminal extends Program {
             try {
                 result = await cmd.call(this, this.input.value);
             } catch (error) {
+                console.error('a', error)
                 result.output = `Error while trying to execute command: ${this.input.value}
                 ${error}
                 `;
@@ -89,6 +103,7 @@ export class Terminal extends Program {
             this.cmd = '';
         }
     }
+    
     async Draw(_time: DOMHighResTimeStamp): Promise<void> {
         this.historyView.innerHTML = '';
         this.history.forEach(cmd => {
@@ -102,6 +117,7 @@ export class Terminal extends Program {
             this.historyView.appendChild(span);
         });
     }
+
     async Close(): Promise<void> {
         return;
     }
@@ -110,9 +126,70 @@ export class Terminal extends Program {
         const splitted = input.split(" ")
         return {
             cmdName: splitted[0],
-            args: splitted.slice(1)
+            args: splitted.slice(1),
+            input
         }
     }
+
+    isRelativePath(path: string) {
+        return path.startsWith('./') || !path.startsWith('/');
+    }
+
+    normalizeRelativePath(relativePath: string, currentPath: string) {
+        const isCurrentDirectoryPath = !relativePath.startsWith('./')
+        const formatted = relativePath.split('/').slice(isCurrentDirectoryPath ? 0 : 1).join('/');
+        return `${currentPath === '/' ? '' : currentPath}/${formatted}`;
+    }
+
+    async getInputInformation(input: string, options: {
+        invalidOutput?: string,
+        pathIndexes?: number[],
+        validations: ((inputInformation: InputInformation) => TerminalCommandResult | void)[],
+    }) {
+        const information: {
+            result?: TerminalCommandResult;
+            paths: {
+                isRelative: boolean;
+                parsed: string;
+                target: SystemFile<unknown> | null;
+                validTarget: boolean;
+            }[];
+            parsedInput: ParsedCommandInput;
+        } = {
+            parsedInput: this.getCmdInput(input),
+            paths: []
+        }
+
+        if (options.pathIndexes) {
+            for (const argNum of options.pathIndexes) {
+                const rawPath = information.parsedInput.args[argNum]
+                if (!rawPath) continue
+                const isRelative = this.isRelativePath(rawPath)
+                const parsed = isRelative ? this.normalizeRelativePath(rawPath, this.currentPath)  : rawPath
+                const target = await FileSystem.GetByPath(parsed)
+
+                information.paths.push({
+                    isRelative,
+                    parsed,
+                    target,
+                    validTarget: !!target
+                })
+            }
+        }
+
+        for (const validation of options.validations) {
+            const failedValidationResult = validation.call(this, information)
+
+            if (failedValidationResult) {
+                information.result = failedValidationResult;
+                break;
+            }
+        }
+
+        return information;
+    }
+
+    // Commands
 
     async help(input: string): Promise<TerminalCommandResult> {
         const dontShow = ['notFound']
@@ -151,43 +228,21 @@ export class Terminal extends Program {
     }
 
     async ls(input: string): Promise<TerminalCommandResult> {
-        const parsed = this.getCmdInput(input);
+        const inputInformation = await this.getInputInformation(input, {
+            validations: [],
+            pathIndexes: [0]
+        })
 
-        if (parsed.args.length === 1 && parsed.args[0] === 'help') {
-            return {
-                input,
-                output: `Shows the contents of the given path in the filesystem
-                   Usage:
-                   - For showing the contents of the current position: ls
-                   - For showing the contents of a particular path: ls <path>`
-            }
-        }
-        if (!parsed.args || parsed.args.length > 1) {
-            return {
-                input,
-                output: `Invalid number of arguments for ls.
-                                 Type help ls for information about usage.
-                        `
-            };
-        }
+        if (inputInformation.result) return inputInformation.result;
 
-        const isRelative = parsed.args[0]?.startsWith('./') || !parsed.args[0]?.startsWith('/');
-        const isCurrentDirectoryPath = isRelative && !parsed.args[0]?.startsWith('./') && !parsed.args[0]?.startsWith('/');
-
-        let path = this.currentPath;
-        if (parsed.args?.length >= 1 && !isRelative) {
-            path = parsed.args[0];
-        } else if (parsed.args?.length > 0) {
-            const relativePath = parsed.args[0].split('/').slice(isCurrentDirectoryPath ? 0 : 1).join('/');
-            path = `${this.currentPath === '/' ? '' : this.currentPath}/${relativePath}`;
-        }
+        const path = inputInformation.paths[0]?.parsed || this.currentPath
 
         const target = await FileSystem.GetByPath(path);
 
         if (!target) {
             return {
                 input,
-                output: `${path} was not found in the system`
+                output: `${inputInformation.paths[0].parsed} was not found in the system`
             };
         } else {
             const childrens = await FileSystem.GetById(...target.children);
@@ -197,7 +252,6 @@ export class Terminal extends Program {
             };
         }
     }
-
 }
 
 Terminal.icon = document.createElement("span")
