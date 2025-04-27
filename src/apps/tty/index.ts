@@ -163,10 +163,6 @@ export class Terminal extends Program {
         return '/' + stack.join('/');
     }
 
-    pathContainsRelativeReference(path: string) {
-        return path.split("/").some(portion => portion === '..')
-    }
-
     async getInputInformation(input: string, options: {
         invalidOutput?: string,
         pathIndexes?: number[],
@@ -181,9 +177,9 @@ export class Terminal extends Program {
         if (options.pathIndexes) {
             for (const argNum of options.pathIndexes) {
                 const rawPath = information.parsedInput.args[argNum]
-                const parsed = this.normalizePath(rawPath)
+                const parsed = !!rawPath ? this.normalizePath(rawPath) : ''
                 const target = !!rawPath ? await FileSystem.GetByPath(parsed) : null
-                
+
                 information.paths.push({
                     parsed,
                     target,
@@ -283,9 +279,8 @@ export class Terminal extends Program {
         })
 
         if (inputInformation.result) return inputInformation.result;
-
+        
         const target = inputInformation.paths[0]?.target || await FileSystem.GetByPath(this.currentPath)
-
 
         const childrens = await FileSystem.GetById(...target!.children);
         return {
