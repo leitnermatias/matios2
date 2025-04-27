@@ -248,7 +248,7 @@ export class Terminal extends Program {
         if (!target) {
             return {
                 input,
-                output: `${inputInformation.paths[0].parsed} was not found in the system`
+                output: `${inputInformation.paths[0]?.parsed} was not found in the system`
             };
         } else {
             const childrens = await FileSystem.GetById(...target.children);
