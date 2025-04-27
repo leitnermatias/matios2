@@ -18,8 +18,10 @@ export interface InputInformation {
     paths: {
         isRelative: boolean;
         parsed: string;
+        target: SystemFile<unknown> | null;
     }[];
     parsedInput: ParsedCommandInput;
+    commandOptions: {[key: string]: string};
 }
 
 export class Terminal extends Program {
@@ -145,18 +147,10 @@ export class Terminal extends Program {
         pathIndexes?: number[],
         validations: ((inputInformation: InputInformation) => TerminalCommandResult | void)[],
     }) {
-        const information: {
-            result?: TerminalCommandResult;
-            paths: {
-                isRelative: boolean;
-                parsed: string;
-                target: SystemFile<unknown> | null;
-                validTarget: boolean;
-            }[];
-            parsedInput: ParsedCommandInput;
-        } = {
+        const information: InputInformation = {
             parsedInput: this.getCmdInput(input),
-            paths: []
+            paths: [],
+            commandOptions: {}
         }
 
         if (options.pathIndexes) {
@@ -170,8 +164,20 @@ export class Terminal extends Program {
                     isRelative,
                     parsed,
                     target,
-                    validTarget: !!target
                 })
+            }
+        }
+
+        for (const arg of information.parsedInput.args) {
+            if (arg.startsWith('--')) {
+                const splitted = arg.slice(2).split('=')
+
+                if (splitted.length < 2) continue
+
+                const name = splitted[0]
+                const value = splitted.slice(1).join("=")
+
+                information.commandOptions[name] = value
             }
         }
 
@@ -229,7 +235,7 @@ export class Terminal extends Program {
         const inputInformation = await this.getInputInformation(input, {
             validations: [
                 (inputInformation) => {
-                    if (inputInformation.parsedInput.args.length > 1) {
+                    if (inputInformation.parsedInput.args.length > 1 && Object.keys(inputInformation.commandOptions).length === 0) {
                         return {
                             input,
                             output: `Invalid number of arguments for ls (${inputInformation.parsedInput.args.length})`
